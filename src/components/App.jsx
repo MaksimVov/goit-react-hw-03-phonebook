@@ -10,8 +10,16 @@ export class App extends Component {
     filter: '',
   };
 
+  componentDidMount() {
+    const localStorageContacts = JSON.parse(localStorage.getItem('contacts'));
+    if (localStorageContacts) {
+      this.setState({ contacts: localStorageContacts });
+    }
+  }
+
   addContact = (name, number) => {
     const { contacts } = this.state;
+
     const existingContacts = contacts.some(
       contact =>
         contact.name.toLowerCase() === name.toLowerCase() ||
@@ -21,9 +29,14 @@ export class App extends Component {
     if (existingContacts) {
       return alert('Rosie Simpson is already in contacts');
     }
+
+    const newContact = { id: nanoid(), name, number };
+
     this.setState(prevState => ({
-      contacts: [...prevState.contacts, { id: nanoid(), name, number }],
+      contacts: [...prevState.contacts, newContact],
     }));
+
+    localStorage.setItem('contacts', JSON.stringify([...contacts, newContact]));
   };
 
   handleFilterChange = filter => {
@@ -31,9 +44,15 @@ export class App extends Component {
   };
 
   deleteContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+    this.setState(
+      prevState => ({
+        contacts: prevState.contacts.filter(contact => contact.id !== id),
+      }),
+      () => {
+        const { contacts } = this.state;
+        localStorage.setItem('contacts', JSON.stringify(contacts));
+      }
+    );
   };
 
   render() {
@@ -41,7 +60,6 @@ export class App extends Component {
     const filteredContacts = contacts.filter(contact =>
       contact.name.toLowerCase().includes(filter.toLowerCase())
     );
-
     return (
       <div>
         <h1>Phonebook</h1>
